@@ -11,7 +11,7 @@ app.use(
   express.urlencoded({ extended: true, limit: '1gb' }),
 );
 
-app.post(`/service/save.js`, async (req, res) => {
+app.post(`/service/write.js`, async (req, res) => {
   const { sessionJSON } = req.body,
     session = JSON.parse(sessionJSON),
     filepathPrefix = `../results/${""}/`,
