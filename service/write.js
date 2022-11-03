@@ -14,7 +14,7 @@ app.use(
 app.post(`/service/write.js`, async (req, res) => {
   const { sessionJSON } = req.body,
     session = JSON.parse(sessionJSON),
-    filepathPrefix = `../results/${""}/`,
+    filepathPrefix = `../results/${encodeURIComponent(`${session.testId}`)}/`,
     filepathPostfix = `.csv`;
 
   if (!existsSync(filepathPrefix)) mkdirSync(filepathPrefix);
