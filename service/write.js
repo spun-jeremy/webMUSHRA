@@ -57,7 +57,7 @@ app.post(`/service/write.js`, async (req, res) => {
       return line
         .map(l => `${l}`.indexOf(",") > -1 ? `"${l}"` : l)
         .join(",");
-    }).filter(e => !!e).join("\n");
+    }).filter(e => !!e).join("\n") + "\n";
 
   appendFileSync(filename, csvContent);
   return res.json({ ok: true, at: new Date(), filename });
