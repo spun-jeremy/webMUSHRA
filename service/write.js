@@ -3,12 +3,41 @@ require("dotenv").config();
 const express = require("express"),
   { existsSync, mkdirSync, appendFileSync } = require("fs"),
   serverPorts = process.env.PORT ? process.env.PORT.split(/\D+/) : [8080],
-  app = express();
+  app = express(),
+  Sequelize = require("sequelize"),
+  newId = require("uid2"),
+  { lookup } = require("geoip-lite"),
+  dialect = process.env.DB_DIALECT || "mysql",
+  dbConnectString = `${dialect}://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}/${process.env.DB_DB}`,
+  sequelize = new Sequelize(dbConnectString, {
+    dialect,
+    dialectOptions: {
+      connectTimeout: (process.env.DB_CONNECT_TIMEOUT || 3) * 1000,
+    },
+    logging: !!process.env.DB_VERBOSE ? console.log : false,
+  }),
+  defaultSequelizeOptions = { sequelize, timestamps: false },
+  fields = {
+    id: { type: STRING, primaryKey: true },
+    submittedAt: DATE,
+    testName: TEXT,
+    name: TEXT,
+    email: TEXT,
+    sex: TEXT,
+    ipData: JSON,
+    data: JSON
+  };
 
-app.set("trust proxy", true); // allow ip information to be passed through
+class Response extends Sequelize.Model { }
+Response.init(fields, {
+  ...defaultSequelizeOptions,
+  tableName: "responses"
+});
+
+app.set("trust proxy", true); // trust user ip address passed through from nginx
 app.use(
-  express.json({ limit: '1gb' }),
-  express.urlencoded({ extended: true, limit: '1gb' }),
+  express.json({ limit: '1mb' }),
+  express.urlencoded({ extended: true, limit: '1mb' }),
 );
 
 app.post(`/service/write.js`, async (req, res) => {
