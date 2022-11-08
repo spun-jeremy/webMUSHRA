@@ -96,7 +96,11 @@ app.post(`/service/write.js`, async (req, res) => {
   }
 
   recordData["data"] = JSON.stringify(dataList, null, 5);
-  await Response.create(recordData);
+  try {
+    await Response.create(recordData);
+  } catch (e) {
+    console.error(`DB write failure: ${e}`);
+  }
 
   if (!writeMushra) {
     const error = `Unsupported, non-mushra test type`;
