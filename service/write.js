@@ -5,7 +5,8 @@ const express = require("express"),
   serverPorts = process.env.PORT ? process.env.PORT.split(/\D+/) : [8080],
   app = express(),
   Sequelize = require("sequelize"),
-  { TINYINT, STRING, TEXT, JSON, DATE, Model } = Sequelize,
+  { TINYINT, STRING, TEXT, DATE, Model } = Sequelize,
+  JSONCOL = Sequelize.JSON,
   newId = require("uid2"),
   { lookup } = require("geoip-lite"),
   dialect = process.env.DB_DIALECT || "mysql",
@@ -25,8 +26,8 @@ const express = require("express"),
     email: TEXT,
     age: TINYINT,
     sex: TEXT,
-    ipData: JSON,
-    data: JSON
+    ipData: JSONCOL,
+    data: JSONCOL
   };
 
 class Response extends Model { }
