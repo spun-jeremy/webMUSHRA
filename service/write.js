@@ -5,6 +5,7 @@ const express = require("express"),
   serverPorts = process.env.PORT ? process.env.PORT.split(/\D+/) : [8080],
   app = express(),
   Sequelize = require("sequelize"),
+  { TINYINT, STRING, TEXT, JSON, DATE, Model } = Sequelize,
   newId = require("uid2"),
   { lookup } = require("geoip-lite"),
   dialect = process.env.DB_DIALECT || "mysql",
@@ -21,14 +22,14 @@ const express = require("express"),
     id: { type: STRING, primaryKey: true },
     submittedAt: DATE,
     testName: TEXT,
-    name: TEXT,
     email: TEXT,
+    age: TINYINT,
     sex: TEXT,
     ipData: JSON,
     data: JSON
   };
 
-class Response extends Sequelize.Model { }
+class Response extends Model { }
 Response.init(fields, {
   ...defaultSequelizeOptions,
   tableName: "responses"
@@ -49,7 +50,18 @@ app.post(`/service/write.js`, async (req, res) => {
   if (!existsSync(filepathPrefix)) mkdirSync(filepathPrefix);
   const namesLength = session.participant.name.length;
   let writeMushra = false,
-    mushraCsvData = [];
+    mushraCsvData = [],
+    recordData = { // for the database
+      id: newId(16),
+      submittedAt: new Date(),
+      testName: null,
+      email: null,
+      age: null,
+      sex: null,
+      ipData: JSON.stringify(lookup(req.ip || "1.2.3.4"), null, 5),
+      data: null
+    },
+    dataList = [];
 
   let input = ["session_test_id"];
 
@@ -59,21 +71,32 @@ app.post(`/service/write.js`, async (req, res) => {
   input.push("session_uuid", "trial_id", "rating_stimulus", "rating_score", "rating_time", "rating_comment");
   mushraCsvData.push(input);
 
+  dataList.push(input);
+
   for (const trial of session.trials) {
     if (trial.type !== "mushra") continue;
     writeMushra = true;
 
     for (const response of trial.responses) {
       let results = [session.testId];
-      for (let i = 0; i < namesLength; ++i)
+      recordData["testName"] = session.testId;
+
+      for (let i = 0; i < namesLength; ++i) {
         results.push(session.participant.response[i]);
+        recordData[["email", "age", "sex"][i]] = session.participant.response[i];
+      }
 
       results.push(session.uuid, trial.id, response.stimulus,
         response.score, response.time, response.comment);
 
       mushraCsvData.push(results);
+      dataList.push(results);
     }
   }
+
+  recordData["data"] = JSON.stringify(dataList, null, 5);
+  await Response.create(recordData);
+
   if (!writeMushra) {
     const error = `Unsupported, non-mushra test type`;
     console.error(error);
