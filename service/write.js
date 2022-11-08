@@ -53,7 +53,7 @@ app.post(`/service/write.js`, async (req, res) => {
   let writeMushra = false,
     mushraCsvData = [],
     recordData = { // for the database
-      id: newId(16),
+      id: newId(8),
       submittedAt: new Date(),
       testName: null,
       email: null,
