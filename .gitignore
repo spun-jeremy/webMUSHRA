@@ -1,3 +1,5 @@
+.env
+
 doc/jsdoc
 *.log
 .project
